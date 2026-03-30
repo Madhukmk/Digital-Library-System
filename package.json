@@ -1,0 +1,15 @@
+{
+    "name": "digitallibrarysystem-root",
+    "version": "1.0.0",
+    "description": "Root package.json for Digital Library System",
+    "scripts": {
+        "start": "concurrently \"npm run server\" \"npm run client\"",
+        "server": "npm run dev --prefix backend",
+        "client": "npm run dev --prefix frontend",
+        "data:import": "npm run data:import --prefix backend",
+        "data:destroy": "npm run data:destroy --prefix backend"
+    },
+    "devDependencies": {
+        "concurrently": "^9.2.1"
+    }
+}
