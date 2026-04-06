@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { UserPlus, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { UserPlus, CheckCircle, Eye, EyeOff, Send } from 'lucide-react';
 
 
 const RegisterPage = () => {
@@ -9,13 +9,35 @@ const RegisterPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [otp, setOtp] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [error, setError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
     const [loading, setLoading] = useState(false);
+    const [sendingOtp, setSendingOtp] = useState(false);
+    const [otpSent, setOtpSent] = useState(false);
 
-    const { register } = useAuth();
+    const { register, sendOtp } = useAuth();
     const navigate = useNavigate();
+
+    const handleSendOtp = async () => {
+        if (!email) {
+            return setError('Please enter your email to receive an OTP');
+        }
+        setError('');
+        setSuccessMessage('');
+        setSendingOtp(true);
+        try {
+            await sendOtp(email);
+            setOtpSent(true);
+            setSuccessMessage('OTP sent successfully. Please check your email.');
+        } catch (err) {
+            setError(err.message || 'Failed to send OTP');
+        } finally {
+            setSendingOtp(false);
+        }
+    };
 
     const handleRegister = async (e) => {
         e.preventDefault();
@@ -25,10 +47,14 @@ const RegisterPage = () => {
             return setError('Passwords do not match');
         }
 
+        if (!otpSent || !otp) {
+            return setError('Please verify your email with the OTP first');
+        }
+
         setLoading(true);
 
         try {
-            await register(name, email, password);
+            await register(name, email, password, otp);
             navigate('/user');
         } catch (err) {
             setError(err.message || 'Failed to register');
@@ -55,6 +81,11 @@ const RegisterPage = () => {
                         {error}
                     </div>
                 )}
+                {successMessage && (
+                    <div style={{ backgroundColor: '#10b981', color: 'white', padding: '0.75rem', borderRadius: '4px', marginBottom: '1rem', fontSize: '0.875rem' }}>
+                        {successMessage}
+                    </div>
+                )}
 
                 <form onSubmit={handleRegister}>
                     <div className="form-group">
@@ -71,15 +102,51 @@ const RegisterPage = () => {
 
                     <div className="form-group">
                         <label className="form-label">Email Address</label>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                            className="form-input"
-                            placeholder="you@example.com"
-                        />
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                                className="form-input"
+                                placeholder="you@example.com"
+                                style={{ flex: 1 }}
+                            />
+                            <button
+                                type="button"
+                                onClick={handleSendOtp}
+                                disabled={sendingOtp || !email}
+                                style={{ 
+                                    padding: '0.675rem 1rem', 
+                                    whiteSpace: 'nowrap', 
+                                    backgroundColor: 'var(--bg-secondary)',
+                                    color: 'var(--text-primary)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '6px',
+                                    cursor: (sendingOtp || !email) ? 'not-allowed' : 'pointer',
+                                    opacity: (sendingOtp || !email) ? 0.7 : 1,
+                                    fontWeight: 500
+                                }}
+                            >
+                                {sendingOtp ? 'Sending...' : (otpSent ? 'Resend OTP' : 'Send OTP')}
+                            </button>
+                        </div>
                     </div>
+
+                    {otpSent && (
+                        <div className="form-group">
+                            <label className="form-label">Email OTP</label>
+                            <input
+                                type="text"
+                                value={otp}
+                                onChange={(e) => setOtp(e.target.value)}
+                                required
+                                className="form-input"
+                                placeholder="Enter 6-digit code"
+                                maxLength={6}
+                            />
+                        </div>
+                    )}
 
                     <div className="form-group">
                         <label className="form-label">Password</label>

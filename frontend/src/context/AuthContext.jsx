@@ -43,14 +43,14 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const register = async (name, email, password) => {
+    const register = async (name, email, password, otp) => {
         try {
             const response = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ name, email, password }),
+                body: JSON.stringify({ name, email, password, otp }),
             });
 
             if (!response.ok) {
@@ -67,13 +67,34 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const sendOtp = async (email) => {
+        try {
+            const response = await fetch('/api/auth/send-otp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email }),
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.message || 'Failed to send OTP');
+            }
+
+            return await response.json();
+        } catch (error) {
+            throw error;
+        }
+    };
+
     const logout = () => {
         setUser(null);
         sessionStorage.removeItem('dls_user');
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+        <AuthContext.Provider value={{ user, login, register, logout, loading, sendOtp }}>
             {!loading && children}
         </AuthContext.Provider>
     );

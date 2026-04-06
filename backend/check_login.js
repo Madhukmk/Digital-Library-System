@@ -9,7 +9,7 @@ const checkUser = async () => {
     await connectDB();
     try {
         const email = "jane@example.com";
-        const password = "password123";
+        const password = "12345";
 
         const user = await User.findOne({ email });
 

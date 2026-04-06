@@ -7,10 +7,10 @@ const AdminDashboard = () => {
     const [books, setBooks] = useState([]);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [uploading, setUploading] = useState(false);
     const [newBook, setNewBook] = useState({
         title: '',
         author: '',
-        category: '',
         cover: '',
         pdfUrl: '',
     });
@@ -43,6 +43,34 @@ const AdminDashboard = () => {
 
         fetchData();
     }, [user]);
+
+    const uploadFileHandler = async (e, fieldName) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('file', file);
+        setUploading(true);
+
+        try {
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (res.ok) {
+                let data = await res.text();
+                setNewBook({ ...newBook, [fieldName]: data });
+                setUploading(false);
+            } else {
+                alert('File upload failed. Ensure it is a valid file.');
+                setUploading(false);
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Upload error');
+            setUploading(false);
+        }
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -194,28 +222,28 @@ const AdminDashboard = () => {
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">Cover Image URL</label>
+                                    <label className="form-label">Cover Image Upload</label>
                                     <input
-                                        type="url"
-                                        name="cover"
-                                        value={newBook.cover}
-                                        onChange={handleInputChange}
+                                        type="file"
+                                        onChange={(e) => uploadFileHandler(e, 'cover')}
                                         className="form-input"
-                                        placeholder="https://example.com/image.jpg"
+                                        accept="image/*"
+                                        style={{ marginBottom: '0.5rem', padding: '0.5rem' }}
                                     />
+                                    {newBook.cover && <span style={{fontSize: '0.8rem', color: 'var(--success-color)'}}>File attached</span>}
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">Book PDF URL</label>
+                                    <label className="form-label">Book PDF Soft Copy Upload</label>
                                     <input
-                                        type="url"
-                                        name="pdfUrl"
-                                        value={newBook.pdfUrl}
-                                        onChange={handleInputChange}
-                                        required
+                                        type="file"
+                                        onChange={(e) => uploadFileHandler(e, 'pdfUrl')}
                                         className="form-input"
-                                        placeholder="https://example.com/book.pdf"
+                                        accept="application/pdf"
+                                        style={{ marginBottom: '0.5rem', padding: '0.5rem' }}
                                     />
+                                    {newBook.pdfUrl && <span style={{fontSize: '0.8rem', color: 'var(--success-color)'}}>File attached</span>}
+                                    {uploading && <div style={{fontSize: '0.8rem', color: 'var(--primary-color)', marginTop: '0.5rem'}}>Uploading file...</div>}
                                 </div>
 
                                 <div className="full-width" style={{ textAlign: 'right', marginTop: '1rem' }}>
